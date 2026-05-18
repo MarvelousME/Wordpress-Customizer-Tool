@@ -1,0 +1,40 @@
+{
+  "agents": [
+    {
+      "id": "AGENT-001",
+      "name": "Frontend Developer",
+      "description": "Specializes in React, CSS, and UI/UX",
+      "skills": ["React", "CSS", "UI/UX", "Framer Motion"],
+      "proficiency": "expert",
+      "avatar": "Wizard-Logo/frontend-avatar.png",
+      "assigned_tasks": []
+    },
+    {
+      "id": "AGENT-002",
+      "name": "Backend Developer",
+      "description": "PHP, WordPress API, Database expert",
+      "skills": ["PHP", "WordPress", "MySQL", "REST API"],
+      "proficiency": "expert",
+      "avatar": "Wizard-Logo/backend-avatar.png",
+      "assigned_tasks": []
+    },
+    {
+      "id": "AGENT-003",
+      "name": "DevOps Engineer",
+      "description": "Docker, Deployment, CI/CD specialist",
+      "skills": ["Docker", "CI/CD", "Linux", "Nginx"],
+      "proficiency": "senior",
+      "avatar": "Wizard-Logo/devops-avatar.png",
+      "assigned_tasks": []
+    },
+    {
+      "id": "AGENT-004",
+      "name": "QA Engineer",
+      "description": "Testing and bug fixing expert",
+      "skills": ["Testing", "Debugging", "Quality Assurance"],
+      "proficiency": "senior",
+      "avatar": "Wizard-Logo/qa-avatar.png",
+      "assigned_tasks": []
+    }
+  ]
+}
