@@ -1,61 +1,89 @@
-version: '3'
+version: '3.8'
+
 services:
   wordpress:
     image: wordpress:latest
     depends_on:
-      - mysql
-    links:
-      - mysql
+      mysql:
+        condition: service_healthy
     ports:
-      - 8000:80
-    restart: always
+      - "${WORDPRESS_PORT:-8000}:80"
+    restart: unless-stopped
     environment:
       WORDPRESS_DB_HOST: mysql:3306
-      WORDPRESS_DB_USER: wordpress
-      WORDPRESS_DB_PASSWORD: wordpress
-      WORDPRESS_DB_NAME: wp-app
-      WORDPRESS_DEBUG: 1
-      WORDPRESS_TABLE_PREFIX: wp_
+      WORDPRESS_DB_USER: ${MYSQL_USER:-wordpress}
+      WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD:-wordpress}
+      WORDPRESS_DB_NAME: ${MYSQL_DATABASE:-wp-app}
+      WORDPRESS_DEBUG: ${WORDPRESS_DEBUG:-1}
+      WORDPRESS_TABLE_PREFIX: ${WORDPRESS_TABLE_PREFIX:-wp_}
       WORDPRESS_CONFIG_EXTRA: |
         define('FS_METHOD', 'direct');
         define('SCRIPT_DEBUG', true);
     volumes:
-      - ./.srv/wordpress/:/var/www/html
-      - ./.srv/log/:/var/log
-      - ./custom.ini:/usr/local/etc/php/conf.d/custom.ini
+      - wordpress_data:/var/www/html
+      - wordpress_logs:/var/log
+      - ./custom.ini:/usr/local/etc/php/conf.d/custom.ini:ro
+    networks:
+      - wordpress_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   wpcli:
     depends_on:
       - mysql
       - wordpress
     image: wordpress:cli
-    links:
-      - mysql:mysql
     entrypoint: wp
     command: "--info"
     environment:
       WORDPRESS_DB_HOST: mysql:3306
-      WORDPRESS_DB_USER: wordpress
-      WORDPRESS_DB_PASSWORD: wordpress
-      WORDPRESS_DB_NAME: wp-app
-      WORDPRESS_DEBUG: 1
-      WORDPRESS_TABLE_PREFIX: wp_
+      WORDPRESS_DB_USER: ${MYSQL_USER:-wordpress}
+      WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD:-wordpress}
+      WORDPRESS_DB_NAME: ${MYSQL_DATABASE:-wp-app}
+      WORDPRESS_DEBUG: ${WORDPRESS_DEBUG:-1}
+      WORDPRESS_TABLE_PREFIX: ${WORDPRESS_TABLE_PREFIX:-wp_}
       WORDPRESS_CONFIG_EXTRA: |
         define('FS_METHOD', 'direct');
     volumes:
-      - ./.srv/wordpress/:/var/www/html
-      - ./.srv/log/:/var/log
-      - ./custom.ini:/usr/local/etc/php/conf.d/custom.ini
+      - wordpress_data:/var/www/html
+      - wordpress_logs:/var/log
+      - ./custom.ini:/usr/local/etc/php/conf.d/custom.ini:ro
+    networks:
+      - wordpress_network
 
   mysql:
     image: mysql:5.7
-    restart: always
+    restart: unless-stopped
     ports:
-      - 3306:3306
+      - "${MYSQL_PORT:-3306}:3306"
     volumes:
-      - "./.srv/database:/var/lib/mysql"
+      - database_data:/var/lib/mysql
     environment:
-      MYSQL_ROOT_PASSWORD: wordpress
-      MYSQL_DATABASE: wp-app
-      MYSQL_USER: wordpress
-      MYSQL_PASSWORD: wordpress
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-wordpress}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-wp-app}
+      MYSQL_USER: ${MYSQL_USER:-wordpress}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-wordpress}
+    networks:
+      - wordpress_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-wordpress}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  wordpress_data:
+    driver: local
+  wordpress_logs:
+    driver: local
+  database_data:
+    driver: local
+
+networks:
+  wordpress_network:
+    driver: bridge
