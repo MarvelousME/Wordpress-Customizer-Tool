@@ -1,0 +1,61 @@
+version: '3'
+services:
+  wordpress:
+    image: wordpress:latest
+    depends_on:
+      - mysql
+    links:
+      - mysql
+    ports:
+      - 8000:80
+    restart: always
+    environment:
+      WORDPRESS_DB_HOST: mysql:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wp-app
+      WORDPRESS_DEBUG: 1
+      WORDPRESS_TABLE_PREFIX: wp_
+      WORDPRESS_CONFIG_EXTRA: |
+        define('FS_METHOD', 'direct');
+        define('SCRIPT_DEBUG', true);
+    volumes:
+      - ./.srv/wordpress/:/var/www/html
+      - ./.srv/log/:/var/log
+      - ./custom.ini:/usr/local/etc/php/conf.d/custom.ini
+
+  wpcli:
+    depends_on:
+      - mysql
+      - wordpress
+    image: wordpress:cli
+    links:
+      - mysql:mysql
+    entrypoint: wp
+    command: "--info"
+    environment:
+      WORDPRESS_DB_HOST: mysql:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wp-app
+      WORDPRESS_DEBUG: 1
+      WORDPRESS_TABLE_PREFIX: wp_
+      WORDPRESS_CONFIG_EXTRA: |
+        define('FS_METHOD', 'direct');
+    volumes:
+      - ./.srv/wordpress/:/var/www/html
+      - ./.srv/log/:/var/log
+      - ./custom.ini:/usr/local/etc/php/conf.d/custom.ini
+
+  mysql:
+    image: mysql:5.7
+    restart: always
+    ports:
+      - 3306:3306
+    volumes:
+      - "./.srv/database:/var/lib/mysql"
+    environment:
+      MYSQL_ROOT_PASSWORD: wordpress
+      MYSQL_DATABASE: wp-app
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
